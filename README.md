@@ -238,16 +238,16 @@ at this moment, you should provide a wifi ap name:"OPPO K1", password:"12345678"
 
 **reference website**
 
-https://www.kancloud.cn/lichee/lpi0/327885
-https://blog.csdn.net/Jun626/article/details/90082000
-https://whycan.cn/t_561.html
-https://www.kancloud.cn/lichee/lpi0/340992
-http://zero.lichee.pro/
-https://blog.csdn.net/Code_MoMo/article/details/104623584/
-https://whycan.cn/t_2169.html
-https://www.cnblogs.com/ZQQH/p/8366992.html
-http://www.yz0228.com/index.php/2019/11/08/lichee_zero_spi_start/
-https://www.cnblogs.com/ZQQH/p/8360105.html
-https://cn.dl.sipeed.com/
-https://blog.csdn.net/juhou/article/details/98075294
-https://www.cnblogs.com/chenfulin5/p/7550812.html
+- https://www.kancloud.cn/lichee/lpi0/327885
+- https://blog.csdn.net/Jun626/article/details/90082000
+- https://whycan.cn/t_561.html
+- https://www.kancloud.cn/lichee/lpi0/340992
+- http://zero.lichee.pro/
+- https://blog.csdn.net/Code_MoMo/article/details/104623584/
+- https://whycan.cn/t_2169.html
+- https://www.cnblogs.com/ZQQH/p/8366992.html
+- http://www.yz0228.com/index.php/2019/11/08/lichee_zero_spi_start/
+- https://www.cnblogs.com/ZQQH/p/8360105.html
+- https://cn.dl.sipeed.com/
+- https://blog.csdn.net/juhou/article/details/98075294
+- https://www.cnblogs.com/chenfulin5/p/7550812.html
