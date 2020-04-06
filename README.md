@@ -4,10 +4,9 @@ before you start, you need to install the ubuntu host and many tools like toolch
 
 some big file can not be uploaded to github, see here for them:
 
-<https://pan.baidu.com/s/1zsOkOC2vFyQI4IO45IcI0Q>
+<https://pan.baidu.com/s/1zsOkOC2vprebuiltFyQI4IO45IcI0Q>, code: suvz
 
-code: suvz
-
+you could burn(use Win32DiskImager or something like that) this prebuilt image: kernel4.14.1_rootfs_rtl8723bs.img to have a quick start.
 
 ## 1. compile the u-boot
 
