@@ -284,7 +284,41 @@ done.
 
 ---
 
-reference website**
+**how to add at24c02(eeprom) to licheepi**
+
+first you need to connect the at24c02 module to licheepi's i2c0 port. then modify devicetree(arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dts):
+
+```
++&i2c0 {
++    status = "okay";
++
++    at24c02@50 {
++        compatible = "24c02";
++        reg = <0x50>;		// the at24c02's A0,A1,A2 is all zero, your board may be different
++        pagesize = <8>;
++    };
++};
+```
+
+modify the defconfig(arch/arm/configs/sunxi_defconfig):
+
+```
++CONFIG_EEPROM_AT24=y
++CONFIG_SYSFS=y
++CONFIG_I2C=y
+```
+
+now, recompile the kernel and reboot it, type that commands to check it out:
+
+```
+# cd /sys/bus/i2c/devices/0-0050/driver
+# echo hello > eeprom
+# xxd -c 8 -g 1 eeprom
+```
+
+---
+
+**reference website**
 
 - https://www.kancloud.cn/lichee/lpi0/327885
 - https://blog.csdn.net/Jun626/article/details/90082000
