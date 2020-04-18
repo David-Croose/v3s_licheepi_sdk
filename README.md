@@ -232,6 +232,7 @@ $ sync
 ```
 
 at this moment, you should provide a wifi ap name:"OPPO K1", password:"12345678". then insert the tfcard, install the power, start a ssh in ubuntu to licheepi zero.
+note that once you compiled the kernel the file r8723bs.ko should be recopy to rootfs, otherwise, the r8723bs.ko will be failed when insmod.
 
 ------
 
