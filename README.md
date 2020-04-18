@@ -236,7 +236,55 @@ note that once you compiled the kernel the file r8723bs.ko should be recopy to r
 
 ------
 
-**reference website**
+**how to add w25q64(spi nor flash) to licheepi**
+
+first you need to connect a w25q64 module to licheepi's spi port. then you modify the devicetree file(arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dts):
+
+```
++&spi0 {
++    status = "okay";
++
++    w25q64@0 {
++        compatible = "jedec,spi-nor";
++        spi-max-frequency = <12000000>;
++        reg = <0>;
++    };
++};
+```
+
+and the defconfig file(arch/arm/configs/sunxi_defconfig b/arch/arm/configs/sunxi_defconfig)(for convenience, I also add the wifi support, rtl8723bs):
+
+```
+-# CONFIG_WLAN is not set
++CONFIG_STAGING=y
++CONFIG_WLAN=y
++CONFIG_CFG80211=y
++CONFIG_RTL8723BS=m
++
++CONFIG_SPI_MASTER=y
++CONFIG_MTD=y
++CONFIG_MTD_SPI_NOR=y
++CONFIG_MTD_M25P80=y
++CONFIG_MTD_BLOCK=y
+```
+
+the buildroot should also be configured:
+
+![image-20200418155008854](README_src/buildroot_config6.png)
+
+now, reboot licheepi, enter these commands:
+
+```
+# mkfs.fat /dev/mtdblock0
+# mkdir /mnt/w25q64/
+# mount -t vfat /dev/mtdblock0 /mnt/w25q64/
+```
+
+done.
+
+---
+
+reference website**
 
 - https://www.kancloud.cn/lichee/lpi0/327885
 - https://blog.csdn.net/Jun626/article/details/90082000
