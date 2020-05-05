@@ -4,14 +4,14 @@ before you start, you need to install the ubuntu host and many tools like toolch
 
 some big file can not be uploaded to github, see here for them:
 
-<https://pan.baidu.com/s/1zsOkOC2vprebuiltFyQI4IO45IcI0Q>, code: suvz
+<https://pan.baidu.com/s/1mpN6zI-JO7IZXLhk7G3gXA>, code: lz1g
 
 you could burn(use Win32DiskImager or something like that) this prebuilt image: kernel4.14.1_rootfs_rtl8723bs.img to have a quick start.
 
 ## 1. compile the u-boot
 
 ```
-$ cd Lichee-Pi-u-boot
+$ cd u-boot
 $ vim include/configs/sun8i.h
 ```
 
