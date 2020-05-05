@@ -156,7 +156,7 @@ write the u-boot in:
 
 ```
 # umount the /dev/sdb* before this process
-$ sudo dd if=Lichee-Pi-u-boot/u-boot-sunxi-with-spl.bin of=/dev/sdb bs=1024 seek=8
+$ sudo dd if=u-boot/u-boot-sunxi-with-spl.bin of=/dev/sdb bs=1024 seek=8
 ```
 
 
