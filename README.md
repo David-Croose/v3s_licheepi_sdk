@@ -1,14 +1,14 @@
-# the tour of allwinner v3s licheepi zero
+# The tour of allwinner v3s licheepi zero
 
 before you start, you need to install the ubuntu host and many tools like toolchain properly.
 
 some big file can not be uploaded to github, see here for them:
 
-<https://pan.baidu.com/s/1mpN6zI-JO7IZXLhk7G3gXA>, code: lz1g
+<https://pan.baidu.com/s/1mpN6zI-JO7IZXLhk7G3gXA>
 
 you could burn(use Win32DiskImager or something like that) this prebuilt image: kernel4.14.1_rootfs_rtl8723bs.img to have a quick start.
 
-## 1. compile the u-boot
+## 1    compile the u-boot
 
 ```
 $ cd u-boot
@@ -45,7 +45,7 @@ $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
 
 
 
-## 2. compile the kernel
+## 2    compile the kernel
 
 ```
 $ cd linux-4.14.1/
@@ -57,7 +57,7 @@ $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
 
 
 
-## 3. compile the rootfs
+## 3    compile the rootfs
 ```
 $ cd buildroot-2018.08.2
 $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
@@ -76,7 +76,7 @@ $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
 
 
 
-## 4. make a booting  tfcard
+## 4    make a booting  tfcard
 
 before you start, you need to divide the tfcard into 2 partitions, one for kernel and devicetree, another for rootfs. the u-boot isn't in any partitions but in the 8K offset of the tfcard.
 
@@ -161,13 +161,13 @@ $ sudo dd if=u-boot/u-boot-sunxi-with-spl.bin of=/dev/sdb bs=1024 seek=8
 
 
 
-## 5. start licheepi zero
+## 5    start licheepi zero
 
 insert the tfcard, plug the usb2uart(with 3v3 power) cable to the uart0 pin, open minicom in ubuntu.
 
 
 
-## 6. issues
+## 6    issues
 
 ------
 
@@ -222,17 +222,24 @@ now copy the new kernel, devicetree and rootfs to tfcard:
 ```
 $ sudo cp linux-4.14.1/arch/arm/boot/zImage /mnt/sdb1
 $ sudo cp linux-4.14.1/arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dtb /mnt/sdb1
-$ cp linux-4.14.1/drivers/staging/rtl8723bs/r8723bs.ko patch/
+$ sudo cp linux-4.14.1/drivers/staging/rtl8723bs/r8723bs.ko v3s_licheepi_sdk/patch/
 $ sudo rm -rf /mnt/sdb2/*
 $ sudo tar -xf buildroot-2018.08.2/output/images/rootfs.tar -C /mnt/sdb2
-$ cd patch/
-$ sudo ./fill_the_rootfs.sh /mnt/sdb2
+$ cd v3s_licheepi_sdk/patch/
+$ sudo ./fill_the_rootfs.sh
+Please enter your rootfs path:
+/dev/sdb2
+Please enter your WIFI AP name:
+mywifi
+Please enter your WIFI AP password:
+12345678
 $ sudo ./config_ssh.sh /mnt/sdb2
 $ sync
 ```
 
-at this moment, you should provide a wifi ap name:"OPPO K1", password:"12345678". then insert the tfcard, install the power, start a ssh in ubuntu to licheepi zero.
-note that once you compiled the kernel the file r8723bs.ko should be recopy to rootfs, otherwise, the r8723bs.ko will be failed when insmod.
+at this moment, you should provide a wifi ap which has the name and password you specified to "fill_the_rootfs.sh". then insert the tfcard, install the power, start a ssh to licheepi zero.
+
+note that once you compile the kernel, the r8723bs.ko could be failed to insmod, so you may need to recopied it to rootfs.
 
 ------
 

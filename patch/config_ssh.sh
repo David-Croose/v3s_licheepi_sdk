@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ############################################################
 # this is a tool to make rootfs' ssh work by modifying the

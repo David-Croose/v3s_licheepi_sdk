@@ -1,60 +1,59 @@
-#!/bin/sh
+#!/bin/bash
 
 #############################################################
-# this is a tool to add rtl8723bs' firware, module and other
-# stuff into rootfs
+# this is a tool to add rtl8723bs' firmware, modules and
+# other stuff into rootfs
 #############################################################
 
-if [ $# -ne 1 ]; then
-    echo "wrong parameter"
-	echo "demo usage: [sudo] ./fill_the_rootfs.sh /mnt/sdb2/"
-    exit 1
-fi
+echo "Please enter your rootfs path:"
+read fspath
 
-echo the destination is: $1
+echo "Please enter your WIFI AP name:"
+read apname
+echo "Please enter your WIFI AP password:"
+read appassword
 
 # [1]
-if [ ! -d $1/lib/firmware/rtlwifi/ ]; then
-    sudo mkdir -p $1/lib/firmware/rtlwifi/
+if [ ! -d $fspath/lib/firmware/rtlwifi/ ]; then
+    sudo mkdir -p $fspath/lib/firmware/rtlwifi/
 fi
-sudo cp rtl8723bs_nic.bin $1/lib/firmware/rtlwifi/
+sudo cp rtl8723bs_nic.bin $fspath/lib/firmware/rtlwifi/
 
 # [2]
-sudo cp r8723bs.ko $1/root
+if [ ! -d $fspath/lib/modules/rtl ]; then
+	sudo mkdir -p $fspath/lib/modules
+fi
+sudo cp r8723bs.ko $fspath/lib/modules
 
 # [3]
-sudo echo > $1/etc/wpa_supplicant.conf
-conf="
+sudo rm -f $fspath/etc/wpa_supplicant.conf
+sudo cat>$fspath/etc/wpa_supplicant.conf<<EOF
 #############################################
-# sam add
+# for wifi rtl8723bs
 #############################################
 ctrl_interface=/var/run/wpa_supplicant
 ctrl_interface_group=0
 ap_scan=1
 network={
-    ssid=\"OPPO K1\"
+    ssid="$apname"
     scan_ssid=1
     key_mgmt=WPA-EAP WPA-PSK IEEE8021X NONE
     pairwise=TKIP CCMP
     group=CCMP TKIP WEP104 WEP40
-    psk=\"12345678\"
+    psk="$appassword"
     priority=5
-}"
-sudo cat>$1/etc/wpa_supplicant.conf<<EOF
-$conf
+}
 EOF
 
 # [4]
-setup="
+sudo cat>>$fspath/etc/init.d/rcS<<EOF
 #############################################
-# sam add
+# for wifi rtl8723bs
 #############################################
-insmod /root/r8723bs.ko
+insmod /lib/modules/r8723bs.ko
 ifconfig wlan0 up
 wpa_supplicant -B -d -i wlan0 -c /etc/wpa_supplicant.conf
-udhcpc -i wlan0"
-sudo cat>>$1/etc/init.d/rcS<<EOF
-$setup
+udhcpc -i wlan0
 EOF
 
 echo OK
