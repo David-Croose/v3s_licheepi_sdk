@@ -325,6 +325,66 @@ now, recompile the kernel and reboot it, type that commands to check it out:
 
 ---
 
+**how to add w5500 to licheepi(not finish yet)**
+
+config your kernel:
+
+![image-20200919175752050](README_src/w5500_config.png)
+
+add w5500 node to your sun8i-v3s-licheepi-zero-dock.dts:
+
+```
+&spi0 {
+	status = "okay";
+
+	w5500@0 {
+		compatible = "w5500";
+		reg = <0>;
+		spi-max-frequency = <12000000>;
+		/*
+		interrupt-parent = <&pio>;
+		interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
+		*/
+	};
+};
+```
+
+you could see the "interrupts" and "interrupt-parent" in the w5500 device node has been commented, why I do this? cause the w5500 spi driver can not get the irq from devicetree correctly, maybe it is a bug of licheepi kernel or some mistakes done by me. Anyway, I can't fix it, so I modify the w5500 driver to let it requeset irq from gpio_to_irq.
+
+and the driver of w5500 should be modify as the following shows. 
+
+```
+@@ -17,6 +17,7 @@
+ #include <linux/netdevice.h>
+ #include <linux/of_net.h>
+ #include <linux/spi/spi.h>
++#include <linux/gpio.h>
+ 
+ #include "w5100.h"
+ 
+@@ -434,6 +435,17 @@
+ 		return -EINVAL;
+ 	}
+ 
++#define GPIO	32
++
++	if (gpio_request(GPIO, "w5500-int")) {
++		return -ENODEV;
++	}
++
++	spi->irq = gpio_to_irq(GPIO);
++	if (spi->irq < 0) {
++		return -EPERM;
++	}
++
+ 	return w5100_probe(&spi->dev, ops, priv_size, mac, spi->irq, -EINVAL);
+ }
+```
+
+after all these done, I just find that an eth0 comes out in ifconfig, but it couldn't ping any host.
+
+------
+
 **reference website**
 
 - https://www.kancloud.cn/lichee/lpi0/327885
