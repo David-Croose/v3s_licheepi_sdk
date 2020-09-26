@@ -383,6 +383,36 @@ and the driver of w5500 should be modify as the following shows.
 
 after all these done, I just find that an eth0 comes out in ifconfig, but it couldn't ping any host.
 
+---
+
+**How to debug kernel with KGDB**
+
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
+
+```
+CONFIG_KGDB
+CONFIG_KGDB_SERIAL_CONSOLE
+CONFIG_KGDB_KDB
+CONFIG_DEBUG_KERNEL
+CONFIG_DEBUG_INFO
+CONFIG_DEBUG_RODATA=n
+```
+
+put this into your uboot:
+
+```
+setenv bootargs 'console=ttyS0,115200 panic=5 rootwait root=/dev/mmcblk0p2 earlyprintk rw  vt.global_cursor_default=0  kgdboc=ttyS0,9600 kgdbwait'
+```
+
+when licheepi startsup, connect it's console uart to your Ubuntu host, then put these into your terminal:
+
+```
+arm-linux-gnueabihf-gdb vmlinux
+(gbd) target remote /dev/ttyUSB0
+```
+
+it is not convenient to use KGDB over a serial, very slow. and KGDB over ethernet may be faster but it is not supported by the original kernel, so you may need to patch the kernel if you wanna use it.
+
 ------
 
 **reference website**
