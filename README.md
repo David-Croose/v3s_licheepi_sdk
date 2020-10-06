@@ -43,8 +43,6 @@ $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
 # you get u-boot-sunxi-with-spl.bin now
 ```
 
-
-
 ## 2    compile the kernel
 
 ```
@@ -53,9 +51,6 @@ $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- sunxi_defconfig
 $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
 # you get zImage now
 ```
-
-
-
 
 ## 3    compile the rootfs
 ```
@@ -73,8 +68,6 @@ $ cp /other/place/dl .	# you may need the "dl" directory from other place, becau
 $ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
 # you get rootfs.tar now
 ```
-
-
 
 ## 4    make a booting  tfcard
 
@@ -159,13 +152,9 @@ write the u-boot in:
 $ sudo dd if=u-boot/u-boot-sunxi-with-spl.bin of=/dev/sdb bs=1024 seek=8
 ```
 
-
-
 ## 5    start licheepi zero
 
 insert the tfcard, plug the usb2uart(with 3v3 power) cable to the uart0 pin, open minicom in ubuntu.
-
-
 
 ## 6    issues
 
@@ -228,7 +217,7 @@ $ sudo tar -xf buildroot-2018.08.2/output/images/rootfs.tar -C /mnt/sdb2
 $ cd v3s_licheepi_sdk/patch/
 $ sudo ./fill_the_rootfs.sh
 Please enter your rootfs path:
-/dev/sdb2
+/mnt/sdb2
 Please enter your WIFI AP name:
 mywifi
 Please enter your WIFI AP password:
@@ -240,6 +229,69 @@ $ sync
 at this moment, you should provide a wifi ap which has the name and password you specified to "fill_the_rootfs.sh". then insert the tfcard, install the power, start a ssh to licheepi zero.
 
 note that once you compile the kernel, the r8723bs.ko could be failed to insmod, so you may need to recopied it to rootfs.
+
+------
+
+**how to debug a spi device with /dev/spidevX.Y**
+
+X means spi controller number, Y means spi controller CS pin number.
+
+it is useful that debugging a spi device using SHELL script.
+
+
+add these to your sun8i-v3s-licheepi-zero-dock.dts:
+
+```
++&spi0 {
++    status = "okay";
++
++    spidev@0 {
++        compatible = "rohm,dh2228fv";
++        reg = <0>;
++        spi-max-frequency = <1000000>;
++    };
++};
+```
+
+*note: the "rohm,dh2228fv" looks doesn't associated to spidev, but it truly work.*
+
+enabling these config in your kernel:
+
+```
++CONFIG_SPI_SPIDEV=y
+```
+
+enbling these config in your buildroot:
+
+```
++BR2_PACKAGE_SPI_TOOLS=y
+```
+
+now you can debug your spi device with SHELL script:
+
+you need to connect you MISO and MOSI directly before the test.
+
+config your spidev:
+
+```
+# spi-config -m 3 -l 0 -b 8 -s 1000000 -d /dev/spidev0.0
+```
+
+check out your spidev config:
+
+```
+# spi-config -d /dev/spidev0.0 -q
+/dev/spidev0.0: mode=3, lsb=0, bits=8, speed=1000000
+```
+
+sending and receiving test:
+
+```
+# spi-pipe -d /dev/spidev0.0 -b 8 -n 1
+12345678
+12345678#
+```
+you type "12345678" and the spidev reply "12345678".
 
 ------
 
@@ -289,43 +341,11 @@ now, reboot licheepi, enter these commands:
 
 done.
 
----
-
-**how to add at24c02(eeprom) to licheepi**
-
-first you need to connect the at24c02 module to licheepi's i2c0 port. then modify devicetree(arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dts):
-
-```
-+&i2c0 {
-+    status = "okay";
-+
-+    at24c02@50 {
-+        compatible = "24c02";
-+        reg = <0x50>;		// the at24c02's A0,A1,A2 is all zero, your board may be different
-+        pagesize = <8>;
-+    };
-+};
-```
-
-modify the defconfig(arch/arm/configs/sunxi_defconfig):
-
-```
-+CONFIG_EEPROM_AT24=y
-+CONFIG_SYSFS=y
-+CONFIG_I2C=y
-```
-
-now, recompile the kernel and reboot it, type that commands to check it out:
-
-```
-# cd /sys/bus/i2c/devices/0-0050/driver
-# echo hello > eeprom
-# xxd -c 8 -g 1 eeprom
-```
-
----
+------
 
 **how to add w5500 to licheepi(not finish yet)**
+
+w5500 is a spi ethnet 10M/100M phy chip. note that it's MISO and MOSI connects to your SOC's MISO and MOSI.
 
 config your kernel:
 
@@ -334,19 +354,19 @@ config your kernel:
 add w5500 node to your sun8i-v3s-licheepi-zero-dock.dts:
 
 ```
-&spi0 {
-	status = "okay";
-
-	w5500@0 {
-		compatible = "w5500";
-		reg = <0>;
-		spi-max-frequency = <12000000>;
-		/*
-		interrupt-parent = <&pio>;
-		interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
-		*/
-	};
-};
++&spi0 {
++	status = "okay";
++
++	w5500@0 {
++		compatible = "w5500";
++		reg = <0>;
++		spi-max-frequency = <12000000>;
++		/*
++		interrupt-parent = <&pio>;
++		interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
++		*/
++	};
++};
 ```
 
 you could see the "interrupts" and "interrupt-parent" in the w5500 device node has been commented, why I do this? cause the w5500 spi driver can not get the irq from devicetree correctly, maybe it is a bug of licheepi kernel or some mistakes done by me. Anyway, I can't fix it, so I modify the w5500 driver to let it requeset irq from gpio_to_irq.
@@ -382,6 +402,205 @@ and the driver of w5500 should be modify as the following shows.
 ```
 
 after all these done, I just find that an eth0 comes out in ifconfig, but it couldn't ping any host.
+
+------
+
+**how to debug an i2c device with /dev/i2c-X**
+
+it is useful that debugging an i2c device using SHELL script.
+
+make sure this config is enabled in your kernel(the original kernel config, sunxi_defconfig already has it):
+
+```
+CONFIG_I2C_CHARDEV=y
+```
+
+and the i2c0 node must be enabled in your sun8i-v3s-licheepi-zero-dock.dts:
+
+```
++&i2c0 {
++    status = "okay";
++};
+```
+
+and this config must be enabled in your buildroot:
+
+```
+BR2_PACKAGE_I2C_TOOLS=y
+```
+
+now let's do an example base on at24c02:
+
+scan i2c driver:
+
+```
+# i2cdetect -l
+i2c-0   i2c             mv64xxx_i2c adapter                     I2C adapter
+```
+
+get the functionalities supported by i2c-0:
+
+```
+# i2cdetect -F 0
+Functionalities implemented by /dev/i2c-0:
+I2C                              yes
+SMBus Quick Command              yes
+SMBus Send Byte                  yes
+SMBus Receive Byte               yes
+SMBus Write Byte                 yes
+SMBus Read Byte                  yes
+SMBus Write Word                 yes
+SMBus Read Word                  yes
+SMBus Process Call               yes
+SMBus Block Write                yes
+SMBus Block Read                 no
+SMBus Block Process Call         no
+SMBus PEC                        yes
+I2C Block Write                  yes
+I2C Block Read                   yes
+```
+
+scan i2c device:
+
+```
+# i2cdetect -y 0
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- --
+50: 50 -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+70: -- -- -- -- -- -- -- --
+```
+
+the 0x50 in that table means an i2c device whose address(7bit) is 0x50 is found, and that's our at24c02.
+
+*note: the address 0x48, came from where? I don't know, it always stay there even the i2c port doesn't connect any thing.*
+
+check out the memory of at24c02:
+
+```
+# i2cdump -y 0 0x50
+No size specified (using byte-data access)
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f    0123456789abcdef
+00: 2b 2b 2b 2b 0a 65 70 0a 00 00 00 00 00 00 00 00    ++++?ep?........
+10: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+20: 00 00 00 00 00 00 00 f9 00 00 00 00 00 00 00 00    .......?........
+30: 78 33 43 43 38 46 46 00 00 00 00 00 f9 00 00 00    x3CC8FF.....?...
+40: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+50: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+60: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+70: 00 00 00 00 00 00 00 00 33 33 78 34 34 33 00 00    ........33x443..
+80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+90: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
+```
+
+read a byte from address 0x78:
+
+```
+# i2cget -y 0 0x50 0x78
+0x33
+```
+
+write a byte 0xa5 to address 0xf0:
+
+```
+# i2cset -y 0 0x50 0xf0 0xa5
+```
+
+read 8 bytes from address 0x77:
+
+```
+# i2ctransfer -y 0 w1@0x50 0x77 r8
+```
+
+- "w1@0x50":
+				- w:	doing an i2c write command. in other words, the i2c head frame's rw bit is w(note that you must write the address 0x77 before reading data, so the 'w' there, not 'r');
+	- 1:	1 byte data will be written. this byte is after the i2c head frame;
+	- @0x50:	the i2c device address;
+
+- 0x77: 			the address to be read. note that this byte locates in the i2c head frame;
+- r8:				read 8 bytes. the 'r' command will trigger another i2c package to read all the data;
+
+write 8 bytes to address 0xe0:
+
+```
+# i2ctransfer -y 0 w9@0x50 0xe0 0xaa 0xbb 0xcc 0xdd 0x11 0x22 0x33 0x44
+```
+
+
+
+by the way, the program, i2c-tools can also be installed in ubuntu:
+
+```
+# apt-get install i2c-tools
+```
+
+so you can use `man i2c-tools` to get more details about it.
+
+here is it's options meaning:
+
+```
+OPTIONS
+       -y     Disable interactive mode. By default, i2cdetect will wait for a confirmation from the user before messing with the I2C bus. When  this
+              flag is used, it will perform the operation directly. This is mainly meant to be used in scripts.
+
+       -a     Force scanning of non-regular addresses. Not recommended.
+
+       -q     Use  SMBus  "quick  write"  commands for probing (by default, the command used is the one believed to be the safest for each address).
+              Not recommended. This is known to corrupt the Atmel AT24RF08 EEPROM found on many IBM Thinkpad laptops.
+
+       -r     Use SMBus "read byte" commands for probing (by default, the command used is the one believed to be the safest for each address).   Not
+              recommended. This is known to lock SMBus on various write-only chips (most notably clock chips at address 0x69).
+
+       -F     Display the list of functionalities implemented by the adapter and exit.
+
+       -V     Display the version and exit.
+
+       -l     Output a list of installed busses.
+```
+
+---
+
+**how to add at24c02(eeprom) to licheepi**
+
+first you need to connect the at24c02 module to licheepi's i2c0 port. then modify devicetree(arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dts):
+
+```
++&i2c0 {
++    status = "okay";
++
++    at24c02@50 {
++        compatible = "24c02";
++        reg = <0x50>;		// the at24c02's A0,A1,A2 is all zero, your board may be different
++        pagesize = <8>;
++    };
++};
+```
+
+modify the defconfig(arch/arm/configs/sunxi_defconfig):
+
+```
++CONFIG_EEPROM_AT24=y
++CONFIG_SYSFS=y
++CONFIG_I2C=y
+```
+
+now, recompile the kernel and reboot it, type that commands to check it out:
+
+```
+# cd /sys/bus/i2c/devices/0-0050/driver
+# echo hello > eeprom
+# xxd -c 8 -g 1 eeprom
+```
 
 ---
 
