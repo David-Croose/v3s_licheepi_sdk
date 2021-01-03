@@ -343,9 +343,9 @@ done.
 
 ------
 
-**how to add w5500 to licheepi(not finish yet)**
+**how to add w5500 to licheepi**
 
-w5500 is a spi ethnet 10M/100M phy chip. note that it's MISO and MOSI connects to your SOC's MISO and MOSI.
+w5500 is a spi ethernet 10M/100M phy chip.
 
 config your kernel:
 
@@ -361,47 +361,30 @@ add w5500 node to your sun8i-v3s-licheepi-zero-dock.dts:
 +		compatible = "w5500";
 +		reg = <0>;
 +		spi-max-frequency = <12000000>;
-+		/*
-+		interrupt-parent = <&pio>;
-+		interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
-+		*/
++		nterrupt-parent = <&pio>;
++		interrupts = <1 0 IRQ_TYPE_EDGE_FALLING>;   /* PB00 */
 +	};
 +};
 ```
 
-you could see the "interrupts" and "interrupt-parent" in the w5500 device node has been commented, why I do this? cause the w5500 spi driver can not get the irq from devicetree correctly, maybe it is a bug of licheepi kernel or some mistakes done by me. Anyway, I can't fix it, so I modify the w5500 driver to let it requeset irq from gpio_to_irq.
+connect the w5500 module to licheepi:
 
-and the driver of w5500 should be modify as the following shows. 
+| w5500 | licheepi |
+| ----- | -------- |
+| MISO  | MISO     |
+| MOSI  | MOSI     |
+| CS    | CS       |
+| SCK   | SCK      |
+| RST   | PB00     |
 
-```
-@@ -17,6 +17,7 @@
- #include <linux/netdevice.h>
- #include <linux/of_net.h>
- #include <linux/spi/spi.h>
-+#include <linux/gpio.h>
- 
- #include "w5100.h"
- 
-@@ -434,6 +435,17 @@
- 		return -EINVAL;
- 	}
- 
-+#define GPIO	32
-+
-+	if (gpio_request(GPIO, "w5500-int")) {
-+		return -ENODEV;
-+	}
-+
-+	spi->irq = gpio_to_irq(GPIO);
-+	if (spi->irq < 0) {
-+		return -EPERM;
-+	}
-+
- 	return w5100_probe(&spi->dev, ops, priv_size, mac, spi->irq, -EINVAL);
- }
-```
+note:
+- it's MISO and MOSI connects to your SOC's MISO and MOSI.
 
-after all these done, I just find that an eth0 comes out in ifconfig, but it couldn't ping any host.
+- the RST pin could also be others that supports external-irq whose names are PB_EINT[0-9] and PG_EINT[0-5], as the following table shows. but remember the pin must not be occupied by other driver.
+
+  ![licheepi_pins](README_src\licheepi_pins.png)
+
+now you can start licheepi and it should work.
 
 ------
 
