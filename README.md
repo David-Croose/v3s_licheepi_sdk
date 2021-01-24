@@ -361,7 +361,7 @@ add w5500 node to your sun8i-v3s-licheepi-zero-dock.dts:
 +		compatible = "w5500";
 +		reg = <0>;
 +		spi-max-frequency = <12000000>;
-+		nterrupt-parent = <&pio>;
++		interrupt-parent = <&pio>;
 +		interrupts = <1 0 IRQ_TYPE_EDGE_FALLING>;   /* PB00 */
 +	};
 +};
