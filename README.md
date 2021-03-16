@@ -1,12 +1,28 @@
 # The tour of allwinner v3s licheepi zero
 
-before you start, you need to install the ubuntu host and many tools like toolchain properly.
+![](README_src/board_logical_layout.png)
 
-some big file can not be uploaded to github, see here for them:
+​                                                                            (figure 1)
 
-<https://pan.baidu.com/s/1mpN6zI-JO7IZXLhk7G3gXA>
 
-you could burn(use Win32DiskImager or something like that) this prebuilt image: kernel4.14.1_rootfs_rtl8723bs.img to have a quick start.
+
+![](README_src/v3s_pin_table.png)
+
+​                                                                             (table 1)
+
+
+
+to have a quick start, you could do the procedure bellow to burn a ready-to-run tfcard:
+
+```
+# insert your tfcard into your computer
+$ cd bin
+$ ./pack
+```
+
+after the tfcard is burning done, insert it to the board and power up, you could login the buildroot system with root without password.
+
+
 
 ## 1    compile the u-boot
 
