@@ -26,6 +26,12 @@ after the tfcard is burning done, insert it to the board and power up, you could
 
 ## 1    compile the u-boot
 
+the mainline uboot seems can't work, check this out:
+
+```
+git clone https://github.com/Lichee-Pi/u-boot.git -b v3s-current
+```
+
 ```
 $ cd u-boot
 $ vim include/configs/sun8i.h
