@@ -6,7 +6,7 @@
 
 
 
-![](README_src/v3s_pin_table.png)
+![](README_src/v3s_pin_table.jpg)
 
 ​                                                                             (table 1)
 

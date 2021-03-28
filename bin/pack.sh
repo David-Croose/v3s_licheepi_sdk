@@ -22,23 +22,18 @@ umount_all()
 UBOOT=u-boot-sunxi-with-spl.bin
 KERN=zImage
 DTB=sun8i-v3s-licheepi-zero-dock.dtb
-ROOTFS=rootfs.tar
 
 echo "=================================================================="
 echo "Please enter your sdcard block device name:"
 echo "e.g. /dev/sdb"
 read SDCARD
 
-# get total bytes
-# TOTBYTES=$(echo -e "p\nq\n" | fdisk $SDCARD | grep -oE "Disk $SDCARD:.*bytes" | awk '{print $(NF-1)}')
-
-# clear sdcard
-# dd if=/dev/zero of=$SDCARD bs=1 count=$TOTBYTES
+echo "=================================================================="
+echo "umounting sdcard..."
+umount_all
 
 echo "=================================================================="
 echo "deleting all partitions..."
-umount_all
-
 wipefs -a -f $SDCARD
 # TODO  can this really work?
 dd if=/dev/zero of=$SDCARD bs=1M count=1
@@ -48,11 +43,11 @@ echo "writing uboot into sdcard..."
 dd if=$UBOOT of=$SDCARD bs=1024 seek=8
 
 echo "=================================================================="
-echo "creating partions..."
+echo "creating partitions..."
 fdisk $SDCARD < part.txt
 
 echo "=================================================================="
-echo "formating partions..."
+echo "formating partitions..."
 mkfs.fat ${SDCARD}1
 mkfs.ext4 -F ${SDCARD}2
 
@@ -70,7 +65,24 @@ cp $KERN $DTB /tmp/mnt1
 
 echo "=================================================================="
 echo "copying rootfs..."
-tar -xf rootfs.tar -C /tmp/mnt2
+echo "please enter your rootfs full name:"
+echo "default is rootfs.tar of buildroot"
+read ROOTFS
+if [ -z "$ROOTFS" ]; then
+	ROOTFS=rootfs.tar
+else
+	echo "is that a debian base filesystem?(Y/n)"
+	read ISDEBIAN
+	if [ -z "$ISDEBIAN" ] || [ "$ISDEBIAN" = Y ]; then
+		ISDEBIAN=true
+	else
+		ISDEBIAN=false
+	fi
+fi
+
+echo "=================================================================="
+echo "extracting rootfs..."
+tar -xf $ROOTFS -C /tmp/mnt2
 
 echo "=================================================================="
 echo "setting up WIFI..."
@@ -81,21 +93,18 @@ read appassword
 
 fspath=/tmp/mnt2
 
-# [1]
 if [ ! -d $fspath/lib/firmware/rtlwifi/ ]; then
     mkdir -p $fspath/lib/firmware/rtlwifi/
 fi
 cp rtl8723bs_nic.bin $fspath/lib/firmware/rtlwifi/
 
-# [2]
 if [ ! -d $fspath/lib/modules/rtl ]; then
 	mkdir -p $fspath/lib/modules
 fi
 cp r8723bs.ko $fspath/lib/modules
 
-# [3]
-rm -f $fspath/etc/wpa_supplicant.conf
-cat>$fspath/etc/wpa_supplicant.conf<<EOF
+mkdir -p $fspath/etc/
+cat > $fspath/etc/wpa_supplicant.conf << EOF
 #############################################
 # for wifi rtl8723bs
 #############################################
@@ -113,16 +122,35 @@ network={
 }
 EOF
 
-# [4]
-cat>>$fspath/etc/init.d/rcS<<EOF
-#############################################
-# for wifi rtl8723bs
-#############################################
-insmod /lib/modules/r8723bs.ko
-ifconfig wlan0 up
-wpa_supplicant -B -d -i wlan0 -c /etc/wpa_supplicant.conf
-udhcpc -i wlan0
-EOF
+if [ "$ISDEBIAN" = "true" ]; then
+	cat > $fspath/etc/rc.local <<- EOF
+	#!/bin/bash
+	#############################################
+	# for wifi rtl8723bs
+	#############################################
+	insmod /lib/modules/r8723bs.ko
+	ifconfig wlan0 up
+	wpa_supplicant -B -d -i wlan0 -c /etc/wpa_supplicant.conf
+	udhcpc -i wlan0
+
+	exit 0
+	EOF
+	chmod +x $fspath/etc/rc.local
+
+else
+	# TODO  this boot script may not fit all filesystem
+	cat > $fspath/etc/init.d/rcS <<- EOF
+	#!/bin/sh
+	#############################################
+	# for wifi rtl8723bs
+	#############################################
+	insmod /lib/modules/r8723bs.ko
+	ifconfig wlan0 up
+	wpa_supplicant -B -d -i wlan0 -c /etc/wpa_supplicant.conf
+	udhcpc -i wlan0
+	EOF
+
+fi
 
 echo "=================================================================="
 echo "unmounting sdcard..."
