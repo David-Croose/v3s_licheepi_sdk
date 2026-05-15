@@ -655,3 +655,13 @@ it is not convenient to use KGDB over a serial, very slow. and KGDB over etherne
 - https://cn.dl.sipeed.com/
 - https://blog.csdn.net/juhou/article/details/98075294
 - https://www.cnblogs.com/chenfulin5/p/7550812.html
+
+
+------
+
+**Welcome to my shop**
+
+```
+https://item.taobao.com/item.htm?abbucket=8&id=1034826029350&mi_id=0000XnS3ugVKtQFJpLYaypGDrvxcskG77g-WXAa9CnzbFOk&ns=1&priceTId=215046a117783828729697782e1228&spm=a21n57.1.hoverItem.8&utparam=%7B%22aplus_abtest%22%3A%22b336d2fab7c74a39d1b09c341b614dc5%22%7D&xxc=taobaoSearch
+```
+![rax3000q](README_src/rax3000q.jpg)
